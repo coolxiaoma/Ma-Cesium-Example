@@ -3,19 +3,11 @@
  * 修改 longitude / latitude / color 后点击「运行」即可看到效果。
  */
 async function setup(viewer) {
-  const longitude = 111.435519
-  const latitude = 30.611572
+
   const positions = [
-    111.435519,
-    30.611572,
-    111.550839,
-    30.517633,
-    111.529181,
-    30.497636,
-    111.413778,
-    30.591553
+    116.397, 39.907, 116.403, 39.907, 116.403, 39.913, 116.397, 39.913,
   ]
-  
+  // ---------------------------------------------- 计算中心点 ----------------------------------------------
   const cartesians = Cesium.Cartesian3.fromDegreesArray(positions) // 将经纬度坐标转换为笛卡尔坐标
   const boundingSphere = Cesium.BoundingSphere.fromPoints(cartesians) // 计算包围球
   const center = boundingSphere.center // Cartesian3 中心点坐标
@@ -25,24 +17,17 @@ async function setup(viewer) {
   const centerLatitude = Cesium.Math.toDegrees(cartographic.latitude) // 中心点纬度
 
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(centerLongitude, centerLatitude, 50000),
+    destination: Cesium.Cartesian3.fromDegrees(centerLongitude, centerLatitude, 10000),
     duration: 1.5,
   })
 
     let alert = viewer.entities.add({
       name: "警戒区",
-      position: Cesium.Cartesian3.fromDegrees(111.435519, 30.611572), // 必须
+      position: Cesium.Cartesian3.fromDegrees(116.397, 39.907), // 必须
       polygon: {
           show: true,
           hierarchy: Cesium.Cartesian3.fromDegreesArray([
-            111.435519,
-            30.611572,
-            111.550839,
-            30.517633,
-            111.529181,
-            30.497636,
-            111.413778,
-            30.591553
+            116.397, 39.907, 116.403, 39.907, 116.403, 39.913, 116.397, 39.913,
           ]),
           height: 0,
           material:  new Cesium.Color(168 / 255, 22 / 255, 22 / 255, 0.5),
@@ -65,18 +50,11 @@ async function setup(viewer) {
 
   let monitor = viewer.entities.add({
     name: "监视区",
-    position: Cesium.Cartesian3.fromDegrees(111.434144, 30.649819), // 必须
+    position: Cesium.Cartesian3.fromDegrees(116.39, 39.9), // 必须
     polygon: {
         show: true,
         hierarchy: Cesium.Cartesian3.fromDegreesArray([
-          111.434144,
-          30.649819,
-          111.595106,
-          30.518778,
-          111.530517,
-          30.459383,
-          111.369567,
-          30.590350
+          116.39, 39.9, 116.41, 39.9, 116.41, 39.92, 116.39, 39.92,
         ]),
         height: 0,
         material:  new Cesium.Color(63 / 255, 168 / 255, 22 / 255, 0.5),

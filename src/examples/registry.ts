@@ -34,6 +34,13 @@ export const examples: ExampleMeta[] = [
     loadCode: () => import('./entity/polygon/playground.ts?raw'),
   },
   {
+    id: 'entity-polygon-3D',
+    title: '添加3d多边形实体',
+    group: 'Entity',
+    description: '在地球上添加一个3D多边形标注，演示 entities API。',
+    loadCode: () => import('./entity/polygon-3d/playground.ts?raw'),
+  },
+  {
     id: 'camera-flyto',
     title: '相机飞入',
     group: '相机',
