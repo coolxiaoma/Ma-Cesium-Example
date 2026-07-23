@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.playground.tsbuildinfo",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "strict": false,
+    "noImplicitAny": false
+  },
+  "include": ["src/examples/**/playground.ts", "src/cesium-global.d.ts"],
+  "exclude": []
+}
