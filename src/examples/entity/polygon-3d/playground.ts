@@ -22,11 +22,6 @@ async function setup(viewer) {
       centerLatitude,
       5000,
     ),
-    orientation: {
-      heading: Cesium.Math.toRadians(0.0), // 方位角
-      pitch: Cesium.Math.toRadians(-30.0), // 倾角
-      roll: 0.0 // 旋转角
-    },
     duration: 1.5,
   });
   // ---------------------------------------------- 警戒区 ----------------------------------------------

@@ -42,16 +42,23 @@ export const examples: ExampleMeta[] = [
   },
   {
     id: 'entity-billboard',
-    title: '添加Billboard实体',
+    title: '添加Billboard实体1',
     group: 'Entity',
     description: '在地球上添加一个Billboard标注，演示 entities API。',
     loadCode: () => import('./entity/billboard/playground.ts?raw'),
   },
   {
+    id: 'billboard-1',
+    title: '添加Billboard实体2',
+    group: 'Entity',
+    description: '在地球上添加一个Billboard标注，以设备扫描方向为例，演示 entities API。',
+    loadCode: () => import('./entity/billboard-1/playground.ts?raw'),
+  },
+  {
     id: 'entity-ellipse',
     title: '添加椭圆实体',
     group: 'Entity',
-    description: '在地球上添加一个椭圆标注，演示 entities API。',
+    description: '在地球上添加一个椭圆标注，案例以雷达扫描范围为例，演示 entities API。',
     loadCode: () => import('./entity/ellipse/playground.ts?raw'),
   },
   {
