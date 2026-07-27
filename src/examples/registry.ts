@@ -48,6 +48,13 @@ export const examples: ExampleMeta[] = [
     loadCode: () => import('./entity/billboard/playground.ts?raw'),
   },
   {
+    id: 'entity-ellipse',
+    title: '添加椭圆实体',
+    group: 'Entity',
+    description: '在地球上添加一个椭圆标注，演示 entities API。',
+    loadCode: () => import('./entity/ellipse/playground.ts?raw'),
+  },
+  {
     id: 'camera-flyto',
     title: '相机飞入',
     group: '相机',

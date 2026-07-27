@@ -224,7 +224,7 @@ function bindDetailPopup(viewer, dataByDeviceId) {
     }
     popup.style.display = 'block'
     popup.style.left = `${canvasPos.x}px`
-    popup.style.top = `${canvasPos.y}px`
+    popup.style.top = `${canvasPos.y-40}px` // 40px 是图片的高度
   }
 
   //显示详情框
