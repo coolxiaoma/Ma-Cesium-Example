@@ -9,7 +9,7 @@ async function setup(viewer) {
 
   // 飞行到椭圆位置
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 20000),
+    destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, 100000),
     duration: 1.5,
   });
 
@@ -18,9 +18,9 @@ async function setup(viewer) {
       deviceId: "1234567890",
       deviceName: "雷达",
       deviceType: "F01",
-      deviceStatus: "在线",
+      deviceStatusName: "在线",
       scope: 50000,
-
+      deviceStatus: 1,
       devicePosition: {
         longitude: 116.391,
         latitude: 39.907,
@@ -30,8 +30,9 @@ async function setup(viewer) {
       deviceId: "1234567891",
       deviceName: "雷达2",
       deviceType: "F02",
-      deviceStatus: "离线",
+      deviceStatusName: "离线",
       scope: 30000,
+      deviceStatus: 0,
       devicePosition: {
         longitude: 116.392,
         latitude: 39.307,
@@ -53,6 +54,10 @@ async function setup(viewer) {
       radarInfo.scope,
       270,
     );
+    const ONLINE = Cesium.Color.fromCssColorString('#a81616')
+    const OFFLINE = Cesium.Color.fromCssColorString('#999999')
+    const transparencyZeroFive = (radarInfo.deviceStatus === 1 ? ONLINE : OFFLINE).withAlpha(0.5) // 透明度0.5
+    const transparencyOne = (radarInfo.deviceStatus === 1 ? ONLINE : OFFLINE).withAlpha(1) // 透明度1
     // 添加椭圆
     viewer.entities.add({
       name: radarInfo.deviceName,
@@ -67,16 +72,16 @@ async function setup(viewer) {
         semiMajorAxis: radarInfo.scope, // 长轴
         semiMinorAxis: radarInfo.scope, // 短轴
         height: 0, // 高度
-        material: new Cesium.Color(168 / 255, 22 / 255, 22 / 255, 0.5), // 材质
+        material: transparencyZeroFive, // 材质
         outline: true, // 是否显示轮廓
-        outlineColor: new Cesium.Color(168 / 255, 22 / 255, 22 / 255, 0.5), // 轮廓颜色
+        outlineColor: transparencyZeroFive, // 轮廓颜色
         outlineWidth: 2, // 轮廓宽度
         show: true, // 是否显示
       },
       // 广告牌
       billboard: {
         image:
-          radarInfo.deviceStatus === "在线"
+          radarInfo.deviceStatus === 1
             ? "/img/radar-online.png"
             : "/img/radar-offline.png",
         scale: 1,
@@ -96,13 +101,13 @@ async function setup(viewer) {
         20000,
       ), // 经纬度传入高度值2000
       label: {
-        text: `${radarInfo.deviceName}\n${radarInfo.deviceType}\n${radarInfo.deviceStatus}`, // 设备名称、类型、状态
+        text: `${radarInfo.deviceName}\n${radarInfo.deviceType}\n${radarInfo.deviceStatusName}`, // 设备名称、类型、状态
         font: "14pt sans-serif", // 字体样式
         fillColor: Cesium.Color.WHITE, // 字体颜色
         showBackground: true, // 是否显示背景颜色
-        backgroundColor: new Cesium.Color(168 / 255, 22 / 255, 22 / 255, 0.8), // 背景颜色
+        backgroundColor: transparencyOne, // 背景颜色
         backgroundPadding: new Cesium.Cartesian2(12, 10), // 背景padding
-        outlineColor: new Cesium.Color(168 / 255, 22 / 255, 22 / 255, 1), // 文字轮廓颜色
+        outlineColor: transparencyOne, // 文字轮廓颜色
         outlineWidth: 2, // 文字轮廓宽度
         style: Cesium.LabelStyle.FILL_AND_OUTLINE, // label样式
         verticalOrigin: Cesium.VerticalOrigin.CENTER, // 垂直位置
@@ -126,9 +131,9 @@ async function setup(viewer) {
             20000,
           ), // 从体块顶面中心 → 信息盒-结束
         ],
-        width: 2,
+        width: 5,
         material: new Cesium.PolylineDashMaterialProperty({
-          color: new Cesium.Color(168 / 255, 22 / 255, 22 / 255, 1),
+          color: transparencyOne,
           dashLength: 16,
         }),
       },
@@ -269,7 +274,7 @@ function bindDetailPopup(viewer, dataByDeviceId) {
     const rows = [
       ["设备 ID", raw.deviceId],
       ["类型", raw.deviceType],
-      ["状态", raw.deviceStatus],
+      ["状态", raw.deviceStatusName],
       ["范围", raw.scope],
       ["经度", raw.devicePosition.longitude],
       ["纬度", raw.devicePosition.latitude],
