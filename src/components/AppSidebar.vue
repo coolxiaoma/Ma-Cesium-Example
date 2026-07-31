@@ -126,4 +126,15 @@ function go(id: string) {
   background: #1f3a5f;
   color: #fff;
 }
+
+@media (max-width: 960px) {
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    max-height: 36vh;
+    border-right: 0;
+    border-bottom: 1px solid #243041;
+  }
+}
 </style>

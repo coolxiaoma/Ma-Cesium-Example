@@ -19,9 +19,22 @@ const panelWidth = ref(440)
 
 let viewer: Viewer | null = null
 let currentDestroy: (() => void) | null = null
+let resizeObserver: ResizeObserver | null = null
 
 const exampleId = computed(() => String(route.params.id ?? ''))
 const example = computed(() => getExampleById(exampleId.value))
+
+function bindViewerResize(el: HTMLElement) {
+  resizeObserver?.disconnect()
+  resizeObserver = new ResizeObserver(() => {
+    if (!viewer || viewer.isDestroyed()) return
+    // Cesium 只监听 window.resize；flex/媒体查询改容器尺寸时需手动同步
+    if (el.clientWidth > 0 && el.clientHeight > 0) {
+      viewer.resize()
+    }
+  })
+  resizeObserver.observe(el)
+}
 
 async function loadExampleCode(id: string) {
   const meta = getExampleById(id)
@@ -81,16 +94,20 @@ async function recreateViewer() {
   if (!cesiumContainer.value) return
 
   viewer = createViewer(cesiumContainer.value)
+  bindViewerResize(cesiumContainer.value)
   await runCurrentCode()
 }
 
 onMounted(async () => {
   if (!cesiumContainer.value) return
   viewer = createViewer(cesiumContainer.value)
+  bindViewerResize(cesiumContainer.value)
   await loadExampleCode(exampleId.value)
 })
 
 onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
   currentDestroy?.()
   currentDestroy = null
   if (viewer && !viewer.isDestroyed()) {
@@ -285,15 +302,25 @@ watch(exampleId, (id) => {
     flex-direction: column;
   }
 
+  .main {
+    min-height: 0;
+  }
+
   .workspace {
     flex-direction: column;
+  }
+
+  .viewer-wrap {
+    flex: 1;
+    min-height: 200px;
   }
 
   .editor-panel {
     width: 100% !important;
     max-width: none;
     min-width: 0;
-    height: 42vh;
+    flex: none;
+    height: 36vh;
     border-left: 0;
     border-top: 1px solid #243041;
   }
