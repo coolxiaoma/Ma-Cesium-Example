@@ -26,9 +26,6 @@ async function setup(viewer) {
       color: '#f59e0b',
     },
   ]
-
-  viewer.clock.shouldAnimate = true
-
   for (const device of deviceList) {
     addDeviceWithScan(viewer, device)
   }
@@ -44,8 +41,8 @@ async function setup(viewer) {
  */
 function addDeviceWithScan(viewer, device) {
   const baseColor = Cesium.Color.fromCssColorString(device.color)
-  const halfAngle = device.sectorAngle / 2
-  const startMs = performance.now()
+  const halfAngle = device.sectorAngle / 2 // 扇形开口角的一半
+  const startMs = performance.now() // 开始时间
 
   // 设备图标
   viewer.entities.add({
@@ -57,7 +54,7 @@ function addDeviceWithScan(viewer, device) {
       scale: 1,
       color: Cesium.Color.WHITE,
       horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-      verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+      verticalOrigin: Cesium.VerticalOrigin.CENTER,
       heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
       disableDepthTestDistance: Number.POSITIVE_INFINITY,
     },
@@ -89,45 +86,6 @@ function addDeviceWithScan(viewer, device) {
       classificationType: Cesium.ClassificationType.BOTH,
     },
   })
-
-  // 扇形左右边界光线（更像扫描光束）
-  viewer.entities.add({
-    id: `scan-rays-${device.deviceId}`,
-    name: `${device.deviceName}-扫描边界`,
-    polyline: {
-      positions: new Cesium.CallbackProperty(() => {
-        const elapsedSec = (performance.now() - startMs) / 1000
-        const heading = (elapsedSec * device.scanSpeed) % 360
-        const left = getPointByBearing(
-          device.longitude,
-          device.latitude,
-          device.scope,
-          heading - halfAngle,
-        )
-        const right = getPointByBearing(
-          device.longitude,
-          device.latitude,
-          device.scope,
-          heading + halfAngle,
-        )
-        const center = Cesium.Cartesian3.fromDegrees(
-          device.longitude,
-          device.latitude,
-          0,
-        )
-        return [
-          Cesium.Cartesian3.fromDegrees(left.longitude, left.latitude, 0),
-          center,
-          Cesium.Cartesian3.fromDegrees(right.longitude, right.latitude, 0),
-        ]
-      }, false),
-      width: 2,
-      material: new Cesium.PolylineGlowMaterialProperty({
-        glowPower: 0.25,
-        color: baseColor.withAlpha(0.95),
-      }),
-    },
-  })
 }
 
 /**
@@ -154,7 +112,7 @@ function buildSectorPositions(lon, lat, radius, heading, halfAngle) {
   positions.push(
     Cesium.Cartesian3.fromDegrees(endPoint.longitude, endPoint.latitude, 0),
   )
-
+  console.log(positions, 'positions');
   return positions
 }
 
