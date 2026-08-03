@@ -1,9 +1,9 @@
 /**
- * 综合案例 — 功能菜单 + 点绘制
+ * 综合案例 — 功能菜单 + 打点连线
  * 思路：
- * 1. 在 Cesium 容器上挂功能菜单（按钮和菜单）
- * 2. 功能菜单包含点绘制按钮，点击后显示点绘制状态，再点击后隐藏点绘制状态
- * 3. 屏幕空间事件处理，点击后绘制点，按住鼠标左键拖动绘制点
+ * 1. 在 Cesium 容器上挂功能菜单
+ * 2. 开启绘线后，每次点击地图打一个点，并写入 positions
+ * 3. 一条 polyline 用 CallbackProperty 读 positions，点会自动连成线
  */
 let cleanup = () => {}
 
@@ -20,42 +20,53 @@ async function setup(viewer) {
   const { toggleBtn, menu, drawBtn } = tools
   let drawing = false
   let count = 0
+  const positions = [] // 所有点的坐标，polyline 会跟着它更新
 
-  // 功能菜单按钮点击事件
+  // 一条线：positions 变了，线就变了
+  viewer.entities.add({
+    polyline: {
+      positions: new Cesium.CallbackProperty(() => positions, false),
+      width: 3,
+      material: Cesium.Color.CYAN,
+      clampToGround: true,
+    },
+  })
+
   toggleBtn.addEventListener('click', () => {
     (menu as HTMLElement).hidden = !(menu as HTMLElement).hidden
   })
 
-  // 点绘制按钮点击事件（用于判断是否在绘制状态，并切换按钮状态）
   drawBtn.addEventListener('click', () => {
     drawing = !drawing;
     (drawBtn as HTMLButtonElement).dataset.active = drawing ? '1' : '0';
-    (drawBtn as HTMLButtonElement).textContent = drawing ? '点绘制中…' : '点绘制'
+    (drawBtn as HTMLButtonElement).textContent = drawing ? '绘线中…' : '绘线'
   })
 
-  // 屏幕空间事件处理
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
   handler.setInputAction((click) => {
     if (!drawing) return
-    // 获取点击位置的笛卡尔坐标，如果获取不到，则获取点击位置的经纬度
-    const cartesian = viewer.scene.pickPosition(click.position) // 获取点击位置的笛卡尔坐标
-      ?? viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid) // 获取点击位置的经纬度
+    const cartesian = viewer.scene.pickPosition(click.position)
+      ?? viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid)
     if (!cartesian) return
+
+    // 1. 记下坐标 → 线自动延伸
+    positions.push(cartesian)
+    // 2. 同时画一个带序号的点，方便看清顶点
     count += 1
     viewer.entities.add({
       name: `Point-${count}`,
       position: cartesian,
       point: {
-        pixelSize: 12, // 像素大小
-        color: Cesium.Color.CYAN, // 颜色
-        disableDepthTestDistance: Number.POSITIVE_INFINITY, // 禁用深度测试距离
+        pixelSize: 12,
+        color: Cesium.Color.CYAN,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
       },
       label: {
-        text: String(count), // 文本
-        font: '12px sans-serif', // 字体
-        pixelOffset: new Cesium.Cartesian2(0, -18), // 像素偏移
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE, // 样式
-        disableDepthTestDistance: Number.POSITIVE_INFINITY, // 禁用深度测试距离
+        text: String(count),
+        font: '12px sans-serif',
+        pixelOffset: new Cesium.Cartesian2(0, -18),
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        disableDepthTestDistance: Number.POSITIVE_INFINITY,
       },
     })
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK)
@@ -67,6 +78,10 @@ async function setup(viewer) {
   }
 }
 
+function destroy() {
+  cleanup()
+}
+
 /** 在 Cesium 容器上挂功能菜单，返回节点供业务绑定 / destroy 清理 */
 function createToolsPanel(container) {
   const panel = document.createElement('div')
@@ -74,7 +89,7 @@ function createToolsPanel(container) {
   panel.innerHTML = `
     <button type="button" class="ma-tools-toggle">功能</button>
     <div class="ma-tools-menu" hidden>
-      <button type="button" class="ma-tools-draw" data-active="0">点绘制</button>
+      <button type="button" class="ma-tools-draw" data-active="0">绘线</button>
     </div>
   `
   container.appendChild(panel)
@@ -110,16 +125,12 @@ function createToolsPanel(container) {
   return {
     panel,
     style,
-    toggleBtn: panel.querySelector('.ma-tools-toggle'), // 功能菜单按钮
-    menu: panel.querySelector('.ma-tools-menu'), // 功能菜单
-    drawBtn: panel.querySelector('.ma-tools-draw'), // 点绘制按钮
+    toggleBtn: panel.querySelector('.ma-tools-toggle'),
+    menu: panel.querySelector('.ma-tools-menu'),
+    drawBtn: panel.querySelector('.ma-tools-draw'),
     dispose() {
       panel.remove()
       style.remove()
     },
   }
-}
-
-function destroy() {
-  cleanup()
 }

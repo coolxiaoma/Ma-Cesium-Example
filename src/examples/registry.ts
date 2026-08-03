@@ -76,6 +76,13 @@ export const examples: ExampleMeta[] = [
     loadCode: () => import('./entity/ComprehensiveCase/playground.ts?raw'),
   },
   {
+    id: 'entity-comprehensive-2',
+    title: '综合案例2',
+    group: '综合案例',
+    description: '功能菜单展开后可开启线绘制，在地图上点击打点。',
+    loadCode: () => import('./entity/ComprehensiveCase2/playground.ts?raw'),
+  },
+  {
     id: 'camera-flyto',
     title: '相机飞入',
     group: '相机',
