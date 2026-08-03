@@ -42,7 +42,7 @@ async function setup(viewer) {
 function addDeviceWithScan(viewer, device) {
   const baseColor = Cesium.Color.fromCssColorString(device.color)
   const halfAngle = device.sectorAngle / 2 // 扇形开口角的一半
-  const startMs = performance.now() // 开始时间
+  const startMs = performance.now() // 开始时间（performance.now() 返回的是高精度时间戳，单位是毫秒，起点是页面的 time origin（一般是打开/刷新该页的时刻），不是墙上的时钟时间。）
 
   // 设备图标
   viewer.entities.add({
@@ -65,9 +65,21 @@ function addDeviceWithScan(viewer, device) {
     id: `scan-${device.deviceId}`,
     name: `${device.deviceName}-扫描`,
     polygon: {
-      hierarchy: new Cesium.CallbackProperty(() => {
+      hierarchy: new Cesium.CallbackProperty(() => { // 它允许开发者创建动态变化的实体属性
+        /**
+         * 1.elapsedSec
+            performance.now() - startMs 得到从创建扫描实体到现在过了多少毫秒，再 / 1000 变成秒。
+            例如过了 2.5 秒 → elapsedSec = 2.5。
+         * 2.heading
+            elapsedSec * device.scanSpeed：按转速（度/秒）算出转过的总角度。
+            比如 scanSpeed = 40，过了 2 秒 → 80 度。
+            % 360：把角度压回 0~360，转满一圈重新从 0 开始，所以会一直转。
+         * 3.buildSectorPositions
+            合起来：用真实流逝时间 × 转速，得到当前扇形中心方位角，再交给后面的 buildSectorPositions 画扇形。
+         */
         const elapsedSec = (performance.now() - startMs) / 1000
         const heading = (elapsedSec * device.scanSpeed) % 360
+
         return new Cesium.PolygonHierarchy(
           buildSectorPositions(
             device.longitude,
@@ -95,6 +107,7 @@ function addDeviceWithScan(viewer, device) {
  * @param {number} radius 米
  * @param {number} heading 扇形中心方位角（度）0北 90东
  * @param {number} halfAngle 半开口角（度）
+ * 中心 → 左边界 → 弧上若干点 → 右边界
  */
 function buildSectorPositions(lon, lat, radius, heading, halfAngle) {
   const positions = [Cesium.Cartesian3.fromDegrees(lon, lat, 0)]
@@ -123,19 +136,19 @@ function buildSectorPositions(lon, lat, radius, heading, halfAngle) {
  * @param {number} distance 米
  * @param {number} bearing 方位角(度) 0北 90东 180南 270西
  */
-function getPointByBearing(lon, lat, distance, bearing) {
-  const startLonRad = Cesium.Math.toRadians(lon)
-  const startLatRad = Cesium.Math.toRadians(lat)
-  const bearingRad = Cesium.Math.toRadians(bearing)
+function getPointByBearing(lon, lat, distance, bearing) { 
+  const startLonRad = Cesium.Math.toRadians(lon) // 将经度转换为弧度
+  const startLatRad = Cesium.Math.toRadians(lat) // 将纬度转换为弧度
+  const bearingRad = Cesium.Math.toRadians(bearing) // 将方位角转换为弧度
   const earthRadius = Cesium.Ellipsoid.WGS84.maximumRadius
-  const angularDist = distance / earthRadius
+  const angularDist = distance / earthRadius // 将距离转换为弧度
 
-  const lat2Rad = Math.asin(
+  const lat2Rad = Math.asin( // 计算目标点的纬度
     Math.sin(startLatRad) * Math.cos(angularDist) +
       Math.cos(startLatRad) * Math.sin(angularDist) * Math.cos(bearingRad),
   )
 
-  const lon2Rad =
+  const lon2Rad = // 计算目标点的经度
     startLonRad +
     Math.atan2(
       Math.sin(bearingRad) * Math.sin(angularDist) * Math.cos(startLatRad),
