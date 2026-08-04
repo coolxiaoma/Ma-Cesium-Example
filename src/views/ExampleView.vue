@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  watch,
+  type Component,
+} from 'vue'
 import { useRoute } from 'vue-router'
 import type { Viewer } from 'cesium'
 import AppSidebar from '@/components/AppSidebar.vue'
@@ -16,6 +25,7 @@ const errorMessage = ref('')
 const running = ref(false)
 const showEditor = ref(true)
 const panelWidth = ref(440)
+const appComponent = shallowRef<Component | null>(null)
 
 let viewer: Viewer | null = null
 let currentDestroy: (() => void) | null = null
@@ -23,12 +33,12 @@ let resizeObserver: ResizeObserver | null = null
 
 const exampleId = computed(() => String(route.params.id ?? ''))
 const example = computed(() => getExampleById(exampleId.value))
+const isAppMode = computed(() => example.value?.mode === 'app')
 
 function bindViewerResize(el: HTMLElement) {
   resizeObserver?.disconnect()
   resizeObserver = new ResizeObserver(() => {
     if (!viewer || viewer.isDestroyed()) return
-    // Cesium 只监听 window.resize；flex/媒体查询改容器尺寸时需手动同步
     if (el.clientWidth > 0 && el.clientHeight > 0) {
       viewer.resize()
     }
@@ -36,14 +46,53 @@ function bindViewerResize(el: HTMLElement) {
   resizeObserver.observe(el)
 }
 
-async function loadExampleCode(id: string) {
+function teardownPlayground() {
+  currentDestroy?.()
+  currentDestroy = null
+  resizeObserver?.disconnect()
+  resizeObserver = null
+  if (viewer && !viewer.isDestroyed()) {
+    viewer.destroy()
+  }
+  viewer = null
+}
+
+async function ensurePlaygroundViewer() {
+  if (viewer && !viewer.isDestroyed()) return
+  await nextTick()
+  if (!cesiumContainer.value) return
+  viewer = createViewer(cesiumContainer.value)
+  bindViewerResize(cesiumContainer.value)
+}
+
+async function loadExample(id: string) {
   const meta = getExampleById(id)
   if (!meta) {
     errorMessage.value = `未找到案例：${id}`
+    appComponent.value = null
     return
   }
 
   errorMessage.value = ''
+
+  if (meta.mode === 'app') {
+    teardownPlayground()
+    if (!meta.loadApp) {
+      errorMessage.value = `实战页缺少 loadApp：${id}`
+      appComponent.value = null
+      return
+    }
+    const mod = await meta.loadApp()
+    appComponent.value = mod.default
+    return
+  }
+
+  appComponent.value = null
+  await ensurePlaygroundViewer()
+  if (!meta.loadCode) {
+    errorMessage.value = `Playground 缺少 loadCode：${id}`
+    return
+  }
   const mod = await meta.loadCode()
   originalCode.value = mod.default
   code.value = mod.default
@@ -51,7 +100,7 @@ async function loadExampleCode(id: string) {
 }
 
 async function runCurrentCode() {
-  if (!viewer) return
+  if (!viewer || isAppMode.value) return
 
   running.value = true
   errorMessage.value = ''
@@ -82,42 +131,23 @@ function resetCode() {
 }
 
 async function recreateViewer() {
-  currentDestroy?.()
-  currentDestroy = null
-
-  if (viewer && !viewer.isDestroyed()) {
-    viewer.destroy()
-  }
-  viewer = null
-
-  await nextTick()
-  if (!cesiumContainer.value) return
-
-  viewer = createViewer(cesiumContainer.value)
-  bindViewerResize(cesiumContainer.value)
+  if (isAppMode.value) return
+  teardownPlayground()
+  await ensurePlaygroundViewer()
   await runCurrentCode()
 }
 
 onMounted(async () => {
-  if (!cesiumContainer.value) return
-  viewer = createViewer(cesiumContainer.value)
-  bindViewerResize(cesiumContainer.value)
-  await loadExampleCode(exampleId.value)
+  await loadExample(exampleId.value)
 })
 
 onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-  resizeObserver = null
-  currentDestroy?.()
-  currentDestroy = null
-  if (viewer && !viewer.isDestroyed()) {
-    viewer.destroy()
-  }
-  viewer = null
+  appComponent.value = null
+  teardownPlayground()
 })
 
 watch(exampleId, (id) => {
-  void loadExampleCode(id)
+  void loadExample(id)
 })
 </script>
 
@@ -131,7 +161,7 @@ watch(exampleId, (id) => {
           <h1>{{ example?.title ?? '未知案例' }}</h1>
           <p>{{ example?.description }}</p>
         </div>
-        <div class="actions">
+        <div v-if="!isAppMode" class="actions">
           <button type="button" class="btn ghost" @click="showEditor = !showEditor">
             {{ showEditor ? '隐藏源码' : '显示源码' }}
           </button>
@@ -146,20 +176,29 @@ watch(exampleId, (id) => {
       </header>
 
       <div class="workspace">
-        <div class="viewer-wrap">
-          <div ref="cesiumContainer" class="cesium-box" />
+        <!-- 实战页：自包含 Vue 应用 -->
+        <div v-if="isAppMode" class="app-host">
+          <component :is="appComponent" v-if="appComponent" :key="exampleId" />
           <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
         </div>
 
-        <aside v-show="showEditor" class="editor-panel" :style="{ width: `${panelWidth}px` }">
-          <div class="editor-header">
-            <span>源码 Playground</span>
-            <span class="hint">Ctrl / ⌘ + Enter 运行</span>
+        <!-- Playground：平台 Viewer + 编辑器 -->
+        <template v-else>
+          <div class="viewer-wrap">
+            <div ref="cesiumContainer" class="cesium-box" />
+            <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
           </div>
-          <div class="editor-body">
-            <CodeEditor v-model="code" @run="runCurrentCode" />
-          </div>
-        </aside>
+
+          <aside v-show="showEditor" class="editor-panel" :style="{ width: `${panelWidth}px` }">
+            <div class="editor-header">
+              <span>源码 Playground</span>
+              <span class="hint">Ctrl / ⌘ + Enter 运行</span>
+            </div>
+            <div class="editor-body">
+              <CodeEditor v-model="code" @run="runCurrentCode" />
+            </div>
+          </aside>
+        </template>
       </div>
     </main>
   </div>
@@ -243,6 +282,13 @@ watch(exampleId, (id) => {
   min-height: 0;
 }
 
+.app-host {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
 .viewer-wrap {
   position: relative;
   flex: 1;
@@ -310,7 +356,8 @@ watch(exampleId, (id) => {
     flex-direction: column;
   }
 
-  .viewer-wrap {
+  .viewer-wrap,
+  .app-host {
     flex: 1;
     min-height: 200px;
   }
