@@ -70,17 +70,24 @@ export const examples: ExampleMeta[] = [
   },
   {
     id: 'entity-comprehensive',
-    title: '综合案例',
-    group: 'Entity-Comprehensive',
+    title: '综合案例-地图打点',
+    group: '综合案例',
     description: '功能菜单展开后可开启点绘制，在地图上点击打点。',
     loadCode: () => import('./entity/ComprehensiveCase/playground.ts?raw'),
   },
   {
     id: 'entity-comprehensive-2',
-    title: '综合案例2',
+    title: '综合案例-地图绘线',
     group: '综合案例',
     description: '功能菜单展开后可开启线绘制，在地图上点击打点。',
     loadCode: () => import('./entity/ComprehensiveCase2/playground.ts?raw'),
+  },
+  {
+    id: 'entity-comprehensive-3',
+    title: '综合案例-地图绘面',
+    group: '综合案例',
+    description: '功能菜单展开后可开启面绘制，在地图上点击打点围成多边形。',
+    loadCode: () => import('./entity/ComprehensiveCase3/playground.ts?raw'),
   },
   {
     id: 'camera-flyto',
