@@ -75,6 +75,14 @@ export const examples: ExampleMeta[] = [
     loadCode: () => import('./entity/billboard3/playground.ts?raw'),
   },
   {
+    id: 'billboard-4',
+    title: '添加Billboard实体-椭圆体案例',
+    group: '广告牌实体',
+    description: '在地球上添加一个Billboard标注，以椭圆体为例，演示 entities API。',
+    mode: 'playground',
+    loadCode: () => import('./entity/billboard4/playground.ts?raw'),
+  },
+  {
     id: 'entity-ellipse',
     title: '添加椭圆实体',
     group: 'Entity',
@@ -105,6 +113,14 @@ export const examples: ExampleMeta[] = [
     description: '功能菜单展开后可开启面绘制，在地图上点击打点围成多边形。',
     mode: 'playground',
     loadCode: () => import('./entity/ComprehensiveCase3/playground.ts?raw'),
+  },
+  {
+    id: 'entity-gltf',
+    title: '加载 glTF 模型',
+    group: '模型',
+    description: '在指定经纬度加载并渲染本地 glTF 建筑模型。',
+    mode: 'playground',
+    loadCode: () => import('./entity/gltf/playground.ts?raw'),
   },
   {
     id: 'project-draw-tools',
