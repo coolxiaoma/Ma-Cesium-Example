@@ -17,11 +17,11 @@ async function setup(viewer) {
     duration: 1.5,
   })
 
-  const tools = createToolsPanel(viewer.cesiumWidget.container)
-  const { toggleBtn, menu, drawBtn } = tools
+  const tools = createToolsPanel(viewer.cesiumWidget.container) // 创建功能菜单
+  const { toggleBtn, menu, drawBtn } = tools // 获取功能菜单按钮
   let drawing = false
   let count = 0
-  const positions = [] // 当前正在画的临时顶点
+  const positions = [] // 当前正在画的临时顶点（数组）
   const draftMarkers = [] // 未定稿顶点；点数不足被取消时要删掉
 
   // 临时线：只负责「画到一半」的那条
@@ -30,7 +30,7 @@ async function setup(viewer) {
       positions: new Cesium.CallbackProperty(() => positions, false),
       width: 3,
       material: Cesium.Color.CYAN,
-      clampToGround: true,
+      clampToGround: true,  // 是否沿地球表面绘制
     },
   })
 
@@ -60,11 +60,11 @@ async function setup(viewer) {
     positions.length = 0
   }
 
-  toggleBtn.addEventListener('click', () => {
+  toggleBtn.addEventListener('click', () => { // 功能菜单按钮点击事件
     (menu as HTMLElement).hidden = !(menu as HTMLElement).hidden
   })
 
-  drawBtn.addEventListener('click', () => {
+  drawBtn.addEventListener('click', () => { // 点绘制按钮点击事件（用于判断是否在绘制状态，并切换按钮状态）
     if (drawing) {
       // 退出绘线 = 结束当前这条
       finishLine()
@@ -83,7 +83,7 @@ async function setup(viewer) {
       ?? viewer.camera.pickEllipsoid(click.position, viewer.scene.globe.ellipsoid)
     if (!cartesian) return
 
-    positions.push(cartesian)
+    positions.push(cartesian) // 将点击位置的笛卡尔坐标添加到临时顶点数组中
     count += 1
     const marker = viewer.entities.add({
       name: `Point-${count}`,
@@ -110,8 +110,8 @@ async function setup(viewer) {
     finishLine()
   }, Cesium.ScreenSpaceEventType.RIGHT_CLICK)
 
-  const blockContextMenu = (e) => e.preventDefault()
-  viewer.scene.canvas.addEventListener('contextmenu', blockContextMenu)
+  const blockContextMenu = (e) => e.preventDefault() // 阻止右键菜单显示
+  viewer.scene.canvas.addEventListener('contextmenu', blockContextMenu) // 添加右键菜单事件监听，防止右键菜单显示
 
   cleanup = () => {
     handler.destroy()
