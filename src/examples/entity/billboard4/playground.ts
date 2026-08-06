@@ -53,14 +53,14 @@ function addDeviceWithScan(viewer, device) {
     position: position,
     point: {
       pixelSize: 14,
-      color: Cesium.Color.RED,
+      color: Cesium.Color.BLUE,
     },
     ellipsoid: {
       radii: new Cesium.Cartesian3(1000, 1000, 1000), // x/y 水平半径，z 竖直半径
       maximumCone: Cesium.Math.PI_OVER_TWO, // 只保留上半球（从天顶到赤道面）
-      material: Cesium.Color.YELLOW.withAlpha(0.5),
+      material: Cesium.Color.TRANSPARENT,
       outline: true,
-      outlineColor: Cesium.Color.WHITE,
+      outlineColor: Cesium.Color.RED,
     },
   })
 }
