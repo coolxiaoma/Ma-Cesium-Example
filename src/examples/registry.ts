@@ -131,6 +131,14 @@ export const examples: ExampleMeta[] = [
     loadApp: () => import('./projects/draw-tools/index.vue'),
   },
   {
+    id: 'project-aggregate-effect',
+    title: '聚合效果',
+    group: '实战项目',
+    description: '地图渲染层级与聚合效果。',
+    mode: 'app',
+    loadApp: () => import('./projects/聚合效果/index.vue'),
+  },
+  {
     id: 'camera-flyto',
     title: '相机飞入',
     group: '相机',
